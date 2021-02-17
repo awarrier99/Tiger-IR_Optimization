@@ -3,13 +3,13 @@ package optimization;
 import ir.IRInstruction;
 import ir.operand.IROperand;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Debug {
-    private static Map<BasicBlock, Integer> blockMap;
+    private static Set<BasicBlock> blockSet;
 
-    private static void printInstruction(IRInstruction instruction, String prefix) {
+    public static void printInstruction(IRInstruction instruction, String prefix) {
         System.out.print(prefix + "Instruction: ");
         System.out.print(instruction.opCode.toString() + ", ");
         for (int i = 0; i < instruction.operands.length; i++) {
@@ -20,26 +20,54 @@ public class Debug {
         System.out.println();
     }
 
-    private static void printBasicBlock(BasicBlock block, String prefix, int num) {
+    private static void printBasicBlock(BasicBlock block, String prefix) {
         if (block == null) return;
 
-        blockMap.put(block, num);
+        blockSet.add(block);
         System.out.println(prefix + "Block:");
         prefix += "\t";
-        System.out.println(prefix + "Name: " + num);
+        System.out.println(prefix + "Name: " + block.name);
 
         System.out.println(prefix + "Instructions:");
         for (IRInstruction instruction: block.instructions) {
             printInstruction(instruction, prefix + "\t");
         }
 
-        System.out.println(prefix + "Unconditional: ");
-        if (blockMap.containsKey(block.unconditionalSuccessor)) System.out.println(prefix + blockMap.get(block.unconditionalSuccessor));
-        else printBasicBlock(block.unconditionalSuccessor, prefix + "\t", num + 1);
+        for (BasicBlock predecessor: block.predecessors) {
+            System.out.println(prefix + "Predecessor: " + predecessor.name);
+        }
+
+        for (BasicBlock successor: block.successors) {
+            System.out.println(prefix + "Successor: ");
+            if (blockSet.contains(successor))
+                System.out.println(prefix + successor.name);
+            else printBasicBlock(successor, prefix + "\t");
+        }
+
+//        if (block.unconditionalSuccessor != null) {
+//            System.out.println(prefix + "Unconditional: ");
+//            if (blockSet.contains(block.unconditionalSuccessor))
+//                System.out.println(prefix + block.unconditionalSuccessor.name);
+//            else printBasicBlock(block.unconditionalSuccessor, prefix + "\t");
+//        }
+//
+//        if (block.trueSuccessor != null) {
+//            System.out.println(prefix + "True: ");
+//            if (blockSet.contains(block.trueSuccessor))
+//                System.out.println(prefix + block.trueSuccessor.name);
+//            else printBasicBlock(block.trueSuccessor, prefix + "\t");
+//        }
+//
+//        if (block.falseSuccessor != null) {
+//            System.out.println(prefix + "False: ");
+//            if (blockSet.contains(block.falseSuccessor))
+//                System.out.println(prefix + block.falseSuccessor.name);
+//            else printBasicBlock(block.falseSuccessor, prefix + "\t");
+//        }
     }
 
     public static void printControlFlowGraph(ControlFlowGraph graph) {
-        blockMap = new HashMap<>();
-        printBasicBlock(graph.entry, "", 0);
+        blockSet = new HashSet<>();
+        printBasicBlock(graph.entry, "");
     }
 }
