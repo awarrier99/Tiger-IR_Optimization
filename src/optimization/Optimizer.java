@@ -44,6 +44,7 @@ public class Optimizer {
 
         criticalCodes.add(IRInstruction.OpCode.CALL);
         criticalCodes.add(IRInstruction.OpCode.CALLR);
+        criticalCodes.add(IRInstruction.OpCode.GOTO);
         criticalCodes.addAll(branchCodes);
     }
 
@@ -210,7 +211,7 @@ public class Optimizer {
         for (int i = 0; i < head.instructions.size(); i++)
         {
             curInst = head.instructions.get(i);
-            if (defCodes.contains(curInst)) {
+            if (defCodes.contains(curInst.opCode)) {
                 head.out.add(curInst.irLineNumber);
                 head.gen.add(curInst.irLineNumber);
                 operand = curInst.operands[0];
@@ -230,7 +231,7 @@ public class Optimizer {
         }
 
         for (int i = 0; i < head.instructions.size(); i++) {
-            if (defCodes.contains(head.instructions.get(i))) {
+            if (defCodes.contains(head.instructions.get(i).opCode)) {
                 defs = definitions.get(head.instructions.get(i).operands[0]);
                 head.kill.addAll(defs);
             }
@@ -241,9 +242,10 @@ public class Optimizer {
     }
 
     private ArrayList<IRInstruction> optimize() {
+        Map<IRInstruction, BasicBlock> blockMap = new HashMap<>();
         ControlFlowGraph graph = this.buildControlFlowGraph();
-        Debug.printControlFlowGraph(graph);
         this.generateReachDefinitions(graph);
+        Debug.printControlFlowGraph(graph);
 
         Set<IRInstruction> critical = new HashSet<>();
         ArrayList<IRInstruction> worklist = new ArrayList<>();
@@ -252,12 +254,14 @@ public class Optimizer {
                 if (criticalCodes.contains(instruction.opCode)) {
                     critical.add(instruction);
                     worklist.add(instruction);
+                    Debug.printInstruction(instruction, "");
                 }
             }
         }
 
         while (!worklist.isEmpty()) {
             IRInstruction instruction = worklist.remove(0);
+
         }
 
         return null;
