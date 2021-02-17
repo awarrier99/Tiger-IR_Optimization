@@ -12,6 +12,8 @@ public class Optimizer {
     private static final Set<String> intrinsicFunctions = new HashSet<>();
     private static int num = 0;
     private static final Set<IRInstruction.OpCode> defCodes = new HashSet<>();
+    private static final Set<IRInstruction.OpCode> criticalCodes = new HashSet<>();
+
     private final IRProgram program;
 
     public Optimizer(String filename) throws FileNotFoundException, IRException {
@@ -39,6 +41,10 @@ public class Optimizer {
         defCodes.add(IRInstruction.OpCode.DIV);
         defCodes.add(IRInstruction.OpCode.AND);
         defCodes.add(IRInstruction.OpCode.OR);
+
+        criticalCodes.add(IRInstruction.OpCode.CALL);
+        criticalCodes.add(IRInstruction.OpCode.CALLR);
+        criticalCodes.addAll(branchCodes);
     }
 
     private Set<IRInstruction> getLeaders(Map<String, IRInstruction> labelMap) {
@@ -226,9 +232,31 @@ public class Optimizer {
         head.kill.removeAll(head.gen);
     }
 
+    private ArrayList<IRInstruction> optimize() {
+        ControlFlowGraph graph = this.buildControlFlowGraph();
+        Debug.printControlFlowGraph(graph);
+        this.generateReachDefinitions(graph);
+
+        Set<IRInstruction> critical = new HashSet<>();
+        ArrayList<IRInstruction> worklist = new ArrayList<>();
+        for (IRFunction function: this.program.functions) {
+            for (IRInstruction instruction: function.instructions) {
+                if (criticalCodes.contains(instruction.opCode)) {
+                    critical.add(instruction);
+                    worklist.add(instruction);
+                }
+            }
+        }
+
+        while (!worklist.isEmpty()) {
+            IRInstruction instruction = worklist.remove(0);
+        }
+
+        return null;
+    }
+
     public static void main(String[] args) throws Exception {
         Optimizer optimizer = new Optimizer(args[0]);
-        ControlFlowGraph graph = optimizer.buildControlFlowGraph();
-        Debug.printControlFlowGraph(graph);
+        optimizer.optimize();
     }
 }
