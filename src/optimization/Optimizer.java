@@ -156,13 +156,9 @@ public class Optimizer {
         BasicBlock head = cfg.entry;
         reachDefinitionsHelper(head, reachedBlocks, definitions, outSet);
         reachedBlocks.clear();
-        reachDefinitionsHelper2(head, tempOutSet, reachedBlocks);
-        tempOutSet2 = tempOutSet;
-        reachDefinitionsHelper2(head, tempOutSet2, reachedBlocks);
 
         while(!outSet.equals(tempOutSet))
         {
-            //System.out.println("Looped");
             tempOutSet = outSet;
             reachDefinitionsHelper2(head, tempOutSet, reachedBlocks);
         }
@@ -204,7 +200,7 @@ public class Optimizer {
         for (int i = 0; i < head.instructions.size(); i++)
         {
             curInst = head.instructions.get(i);
-            if (defCodes.contains(curInst)) {
+            if (defCodes.contains(curInst.opCode)) {
                 head.out.add(curInst.irLineNumber);
                 head.gen.add(curInst.irLineNumber);
                 operand = curInst.operands[0];
@@ -215,16 +211,14 @@ public class Optimizer {
             }
         }
         outSet.put(head.name, head.out);
-        //System.out.println("Size:" + head.successors.size());
         for (int x = 0; x < head.successors.size(); x++) {
             if (!reachedBlocks.contains(head.successors.get(x).name)) {
-                //System.out.println("Got here");
                 reachDefinitionsHelper(head.successors.get(x), reachedBlocks, definitions, outSet);
             }
         }
 
         for (int i = 0; i < head.instructions.size(); i++) {
-            if (defCodes.contains(head.instructions.get(i))) {
+            if (defCodes.contains(head.instructions.get(i).opCode)) {
                 defs = definitions.get(head.instructions.get(i).operands[0]);
                 head.kill.addAll(defs);
             }
