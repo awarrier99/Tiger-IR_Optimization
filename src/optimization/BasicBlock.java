@@ -10,6 +10,8 @@ public class BasicBlock {
     public BasicBlock falseSuccessor;
     public BasicBlock trueSuccessor;
     public HashSet<Integer> in;
+    public String name;
+    public ArrayList<BasicBlock> predecessors;
     public HashSet<Integer> out;
     public HashSet<Integer> gen;
     public HashSet<Integer> kill;

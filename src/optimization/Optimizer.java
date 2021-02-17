@@ -82,12 +82,54 @@ public class Optimizer {
     {
         Map<IROperand, ArrayList<Integer>> definitions = new HashMap<>();
         Set<String> reachedBlocks = new HashSet<>();
+        Map<String, HashSet<Integer>> outSet = new HashMap<>();
+        Map<String, HashSet<Integer>> tempOutSet = new HashMap<>();
         BasicBlock head = cfg.entry;
-        reachDefinitionsHelper(head, reachedBlocks, definitions);
+        reachDefinitionsHelper(head, reachedBlocks, definitions, outSet);
+        reachedBlocks.clear();
+        while(!outSet.equals(tempOutSet))
+        {
+            tempOutSet = outSet;
+            reachDefinitionsHelper2(head, tempOutSet, reachedBlocks);
+        }
 
     }
 
-    private void reachDefinitionsHelper(BasicBlock head, Set<String> reachedBlocks, Map<IROperand, ArrayList<Integer>> definitions)
+    private void reachDefinitionsHelper2 (BasicBlock head, Map<String, HashSet<Integer>> outSet, Set<String> reachedBlocks)
+    {
+        reachedBlocks.add(head.name);
+        head.predecessors.forEach((pred) -> head.in.addAll(pred.out));
+        head.out = head.gen;
+        HashSet<Integer> added = new HashSet<>();
+        added = head.in;
+        added.removeAll(head.kill);
+        head.out.addAll(added);
+        if (outSet.containsKey(head.name)) {
+            outSet.replace(head.name, head.out);
+        } else {
+            outSet.put(head.name, head.out);
+        }
+
+        if (head.unconditionalSuccessor != null && !reachedBlocks.contains(head.unconditionalSuccessor.name))
+        {
+            reachDefinitionsHelper2(head.unconditionalSuccessor, outSet, reachedBlocks);
+        }
+        if (head.falseSuccessor != null && !reachedBlocks.contains(head.falseSuccessor.name))
+        {
+            reachDefinitionsHelper2(head.falseSuccessor, outSet, reachedBlocks);
+        }
+        if (head.trueSuccessor != null && !reachedBlocks.contains(head.trueSuccessor.name))
+        {
+            reachDefinitionsHelper2(head.trueSuccessor, outSet, reachedBlocks);
+        }
+
+    }
+
+    private void reachDefinitionsHelper
+            (BasicBlock head,
+             Set<String> reachedBlocks,
+             Map<IROperand, ArrayList<Integer>> definitions,
+             Map<String, HashSet<Integer>> outSet)
     {
         IROperand operand;
         ArrayList<Integer> defs;
@@ -106,18 +148,20 @@ public class Optimizer {
                 definitions.get(operand).add(curInst.irLineNumber);
             }
         }
+        outSet.put(head.name, head.out);
+
 
         if (head.unconditionalSuccessor != null && !reachedBlocks.contains(head.unconditionalSuccessor.name))
         {
-            reachDefinitionsHelper(head.unconditionalSuccessor, reachedBlocks, definitions);
+            reachDefinitionsHelper(head.unconditionalSuccessor, reachedBlocks, definitions, outSet);
         }
         if (head.falseSuccessor != null && !reachedBlocks.contains(head.falseSuccessor.name))
         {
-            reachDefinitionsHelper(head.falseSuccessor, reachedBlocks, definitions);
+            reachDefinitionsHelper(head.falseSuccessor, reachedBlocks, definitions, outSet);
         }
         if (head.trueSuccessor != null && !reachedBlocks.contains(head.trueSuccessor.name))
         {
-            reachDefinitionsHelper(head.trueSuccessor, reachedBlocks, definitions);
+            reachDefinitionsHelper(head.trueSuccessor, reachedBlocks, definitions, outSet);
         }
 
         for (int i = 0; i < head.instructions.size(); i++) {
