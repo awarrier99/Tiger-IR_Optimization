@@ -1,7 +1,7 @@
 package optimization;
 
 import ir.IRInstruction;
-
+import java.util.HashSet;
 import java.util.ArrayList;
 
 public class BasicBlock {
@@ -9,7 +9,10 @@ public class BasicBlock {
     public BasicBlock unconditionalSuccessor;
     public BasicBlock falseSuccessor;
     public BasicBlock trueSuccessor;
-
+    public HashSet<Integer> in;
+    public HashSet<Integer> out;
+    public HashSet<Integer> gen;
+    public HashSet<Integer> kill;
     public BasicBlock(ArrayList<IRInstruction> instructions) {
         this.instructions = instructions;
     }
