@@ -1,3 +1,5 @@
 .idea/
-**/*.class
+build/
 *.iml
+out.ir
+sources.txt
