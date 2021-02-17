@@ -110,19 +110,11 @@ public class Optimizer {
             outSet.put(head.name, head.out);
         }
 
-        if (head.unconditionalSuccessor != null && !reachedBlocks.contains(head.unconditionalSuccessor.name))
-        {
-            reachDefinitionsHelper2(head.unconditionalSuccessor, outSet, reachedBlocks);
+        for (int x = 0; x < head.successors.size(); x++) {
+            if (!reachedBlocks.contains(head.successors.get(x).name)) {
+                reachDefinitionsHelper2(head.successors.get(x), outSet, reachedBlocks);
+            }
         }
-        if (head.falseSuccessor != null && !reachedBlocks.contains(head.falseSuccessor.name))
-        {
-            reachDefinitionsHelper2(head.falseSuccessor, outSet, reachedBlocks);
-        }
-        if (head.trueSuccessor != null && !reachedBlocks.contains(head.trueSuccessor.name))
-        {
-            reachDefinitionsHelper2(head.trueSuccessor, outSet, reachedBlocks);
-        }
-
     }
 
     private void reachDefinitionsHelper
@@ -150,18 +142,10 @@ public class Optimizer {
         }
         outSet.put(head.name, head.out);
 
-
-        if (head.unconditionalSuccessor != null && !reachedBlocks.contains(head.unconditionalSuccessor.name))
-        {
-            reachDefinitionsHelper(head.unconditionalSuccessor, reachedBlocks, definitions, outSet);
-        }
-        if (head.falseSuccessor != null && !reachedBlocks.contains(head.falseSuccessor.name))
-        {
-            reachDefinitionsHelper(head.falseSuccessor, reachedBlocks, definitions, outSet);
-        }
-        if (head.trueSuccessor != null && !reachedBlocks.contains(head.trueSuccessor.name))
-        {
-            reachDefinitionsHelper(head.trueSuccessor, reachedBlocks, definitions, outSet);
+        for (int x = 0; x < head.successors.size(); x++) {
+            if (!reachedBlocks.contains(head.successors.get(x).name)) {
+                reachDefinitionsHelper(head.successors.get(x), reachedBlocks, definitions, outSet);
+            }
         }
 
         for (int i = 0; i < head.instructions.size(); i++) {
