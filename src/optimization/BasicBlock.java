@@ -16,6 +16,11 @@ public class BasicBlock {
     public HashSet<Integer> kill;
 
     public BasicBlock(int name, ArrayList<IRInstruction> instructions) {
+        this.in = new HashSet<>();
+        this.out = new HashSet<>();
+        this.gen = new HashSet<>();
+        this.kill = new HashSet<>();
+
         this.name = name;
         this.instructions = instructions;
     }
