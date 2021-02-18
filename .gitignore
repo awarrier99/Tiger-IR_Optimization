@@ -4,3 +4,4 @@ out/
 *.iml
 out.ir
 sources.txt
+optimized/

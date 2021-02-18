@@ -5,6 +5,7 @@ import ir.operand.IRFunctionOperand;
 import ir.operand.IRLabelOperand;
 import ir.operand.IROperand;
 import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.*;
 
 public class Optimizer {
@@ -42,6 +43,7 @@ public class Optimizer {
         defCodes.add(IRInstruction.OpCode.AND);
         defCodes.add(IRInstruction.OpCode.OR);
         defCodes.add(IRInstruction.OpCode.ARRAY_LOAD);
+        defCodes.add(IRInstruction.OpCode.CALLR);
 
         criticalCodes.add(IRInstruction.OpCode.CALL);
         criticalCodes.add(IRInstruction.OpCode.CALLR);
@@ -49,6 +51,7 @@ public class Optimizer {
         criticalCodes.add(IRInstruction.OpCode.RETURN);
         criticalCodes.add(IRInstruction.OpCode.GOTO);
         criticalCodes.addAll(branchCodes);
+        criticalCodes.add(IRInstruction.OpCode.LABEL);
     }
 
     private Set<IRInstruction> getLeaders(Map<String, IRInstruction> labelMap) {
@@ -251,7 +254,7 @@ public class Optimizer {
         }
     }
 
-    private ArrayList<IRInstruction> optimize() {
+    private void optimize() {
         Map<IRInstruction, BasicBlock> blockMap = new HashMap<>();
         ControlFlowGraph graph = this.buildControlFlowGraph(blockMap);
         Map<Integer, IRInstruction> linetoInst = this.generateReachDefinitions(graph);
@@ -272,36 +275,69 @@ public class Optimizer {
         while (!worklist.isEmpty()) {
             IRInstruction instruction = worklist.remove(0);
             BasicBlock block = graph.find(graph.entry, instruction);
-            for (int line: block.in) {
-                IRInstruction def = linetoInst.get(line);
-                outer:
-                for (IROperand defOperand: def.operands) {
-                    for (IROperand operand: instruction.operands) {
-                        if (operand.toString().equals(defOperand.toString())) {
+            Debug.printInstruction(instruction, "");
+
+            IRInstruction latestDef = null;
+            for (int i = 0; i < block.instructions.size(); i++) {
+                IRInstruction def = block.instructions.get(i);
+                if (def == instruction) break;
+                if (!defCodes.contains(def.opCode)) continue;
+
+                for (int j = 0; j < instruction.operands.length; j++) {
+                    if (j == 0 && instruction.opCode != IRInstruction.OpCode.RETURN) continue;
+
+                    IROperand operand = instruction.operands[j];
+                    if (operand.toString().equals(def.operands[0].toString())) {
+                        latestDef = def;
+                    }
+                }
+            }
+
+            if (latestDef == null) {
+                System.out.println("Defs:");
+                for (int line: block.in) {
+                    IRInstruction def = linetoInst.get(line);
+                    Debug.printInstruction(def, "\t");
+                    for (int i = 0; i < instruction.operands.length; i++) {
+                        if (i == 0 && instruction.opCode != IRInstruction.OpCode.RETURN) continue;
+
+                        IROperand operand = instruction.operands[i];
+                        if (operand.toString().equals(def.operands[0].toString())) {
                             if (!critical.contains(def)) {
                                 critical.add(def);
                                 worklist.add(def);
-                                break outer;
+                                break;
                             }
                         }
                     }
                 }
+            } else {
+                if (!critical.contains(latestDef)) {
+                    critical.add(latestDef);
+                    worklist.add(latestDef);
+                }
             }
+
+            System.out.println();
         }
 
-        ArrayList<IRInstruction> instructions = new ArrayList<>();
         for (IRFunction function: this.program.functions) {
+            ArrayList<IRInstruction> instructions = new ArrayList<>();
             for (IRInstruction instruction: function.instructions) {
                 if (critical.contains(instruction)) instructions.add(instruction);
             }
+            function.instructions = instructions;
         }
-
-        return instructions;
     }
 
     public static void main(String[] args) throws Exception {
-        Optimizer optimizer = new Optimizer(args[0]);
-        ArrayList<IRInstruction> optimized = optimizer.optimize();
-        for (IRInstruction instruction: optimized) Debug.printInstruction(instruction, "");
+        String filename = args[0];
+        Optimizer optimizer = new Optimizer(filename);
+        optimizer.optimize();
+//        System.out.println("\nOptimized:");
+//        for (IRInstruction instruction: optimized) Debug.printInstruction(instruction, "");
+
+        IRPrinter printer = new IRPrinter(new PrintStream("optimized/" + filename));
+        printer.printProgram(optimizer.program);
     }
 }
