@@ -54,16 +54,17 @@ public class Optimizer {
         criticalCodes.add(IRInstruction.OpCode.LABEL);
     }
 
-    private Set<IRInstruction> getLeaders(Map<String, IRInstruction> labelMap) {
+    private Set<IRInstruction> getLeaders(Map<IRFunction, Map<String, IRInstruction>> labelMap) {
         boolean branchSuccessor = false;
         boolean funcSuccessor = false;
         Set<IRInstruction> leaders = new HashSet<>();
         for (IRFunction function: this.program.functions) {
+            labelMap.put(function, new HashMap<>());
             for (int i = 0; i < function.instructions.size(); i++) {
                 IRInstruction instruction = function.instructions.get(i);
                 if (instruction.opCode == IRInstruction.OpCode.LABEL) {
                     leaders.add(instruction);
-                    labelMap.put(((IRLabelOperand) instruction.operands[0]).getName(), instruction);
+                    labelMap.get(function).put(((IRLabelOperand) instruction.operands[0]).getName(), instruction);
                 }
                 else if (i == 0) leaders.add(instruction);
                 else if (branchSuccessor || funcSuccessor) leaders.add(instruction);
@@ -82,7 +83,7 @@ public class Optimizer {
     }
 
     private ControlFlowGraph buildControlFlowGraph(Map<IRInstruction, BasicBlock> blockMap) {
-        Map<String, IRInstruction> labelMap = new HashMap<>();
+        Map<IRFunction, Map<String, IRInstruction>> labelMap = new HashMap<>();
         Map<String, BasicBlock> functionBlockMap = new HashMap<>();
         Map<String, BasicBlock> returnBlockMap = new HashMap<>();
         ArrayList<IRInstruction> returnCache = new ArrayList<>();
@@ -115,7 +116,7 @@ public class Optimizer {
                 if (instruction.opCode == IRInstruction.OpCode.GOTO) {
                     if (!isLeader) curr.instructions.add(instruction);
                     String label = ((IRLabelOperand) instruction.operands[0]).getName();
-                    BasicBlock block = leaderBlockMap.get(labelMap.get(label));
+                    BasicBlock block = leaderBlockMap.get(labelMap.get(function).get(label));
                     curr.successors.add(block);
                     block.predecessors.add(curr);
                     blockMap.put(instruction, curr);
@@ -123,7 +124,7 @@ public class Optimizer {
                 } else if (branchCodes.contains(instruction.opCode)) {
                     if (!isLeader) curr.instructions.add(instruction);
                     String label = ((IRLabelOperand) instruction.operands[0]).getName();
-                    BasicBlock block = leaderBlockMap.get(labelMap.get(label));
+                    BasicBlock block = leaderBlockMap.get(labelMap.get(function).get(label));
                     curr.successors.add(block);
                     block.predecessors.add(curr);
                     block = leaderBlockMap.get(function.instructions.get(i + 1));
@@ -148,7 +149,7 @@ public class Optimizer {
                         blockMap.put(instruction, curr);
                         curr = null;
                     }
-                } else if (instruction.opCode == IRInstruction.OpCode.RETURN) {
+                } else if (instruction.opCode == IRInstruction.OpCode.RETURN || i == function.instructions.size() - 1) {
                     if (!isLeader) curr.instructions.add(instruction);
                     returnBlockMap.put(function.name, curr);
                     while (!returnCache.isEmpty()) {
