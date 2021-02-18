@@ -294,26 +294,7 @@ public class Optimizer {
                 }
             }
 
-            if (latestDefs.isEmpty()) {
-                System.out.println("Defs:");
-                for (int line: block.in) {
-                    IRInstruction def = linetoInst.get(line);
-                    if (latestDefs.containsKey(def.operands[0].toString())) continue;
-                    Debug.printInstruction(def, "\t");
-                    for (int i = 0; i < instruction.operands.length; i++) {
-                        if (i == 0 && instruction.opCode != IRInstruction.OpCode.RETURN) continue;
-
-                        IROperand operand = instruction.operands[i];
-                        if (operand.toString().equals(def.operands[0].toString())) {
-                            if (!critical.contains(def)) {
-                                critical.add(def);
-                                worklist.add(def);
-                                break;
-                            }
-                        }
-                    }
-                }
-            } else {
+            if (!latestDefs.isEmpty()) {
                 System.out.println("Local defs:");
                 for (String op: latestDefs.keySet()) {
                     IRInstruction latestDef = latestDefs.get(op);
@@ -323,7 +304,25 @@ public class Optimizer {
                         worklist.add(latestDef);
                     }
                 }
+            }
 
+            System.out.println("Defs:");
+            for (int line: block.in) {
+                IRInstruction def = linetoInst.get(line);
+                if (latestDefs.containsKey(def.operands[0].toString())) continue;
+                Debug.printInstruction(def, "\t");
+                for (int i = 0; i < instruction.operands.length; i++) {
+                    if (i == 0 && instruction.opCode != IRInstruction.OpCode.RETURN) continue;
+
+                    IROperand operand = instruction.operands[i];
+                    if (operand.toString().equals(def.operands[0].toString())) {
+                        if (!critical.contains(def)) {
+                            critical.add(def);
+                            worklist.add(def);
+                            break;
+                        }
+                    }
+                }
             }
 
             System.out.println();
