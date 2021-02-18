@@ -274,10 +274,11 @@ public class Optimizer {
 
         while (!worklist.isEmpty()) {
             IRInstruction instruction = worklist.remove(0);
+            if (instruction.opCode == IRInstruction.OpCode.LABEL) continue;
             BasicBlock block = graph.find(graph.entry, instruction);
             Debug.printInstruction(instruction, "");
 
-            IRInstruction latestDef = null;
+            Map<String, IRInstruction> latestDefs = new HashMap<>();
             for (int i = 0; i < block.instructions.size(); i++) {
                 IRInstruction def = block.instructions.get(i);
                 if (def == instruction) break;
@@ -288,15 +289,16 @@ public class Optimizer {
 
                     IROperand operand = instruction.operands[j];
                     if (operand.toString().equals(def.operands[0].toString())) {
-                        latestDef = def;
+                        latestDefs.put(operand.toString(), def);
                     }
                 }
             }
 
-            if (latestDef == null) {
+            if (latestDefs.isEmpty()) {
                 System.out.println("Defs:");
                 for (int line: block.in) {
                     IRInstruction def = linetoInst.get(line);
+                    if (latestDefs.containsKey(def.operands[0].toString())) continue;
                     Debug.printInstruction(def, "\t");
                     for (int i = 0; i < instruction.operands.length; i++) {
                         if (i == 0 && instruction.opCode != IRInstruction.OpCode.RETURN) continue;
@@ -312,10 +314,16 @@ public class Optimizer {
                     }
                 }
             } else {
-                if (!critical.contains(latestDef)) {
-                    critical.add(latestDef);
-                    worklist.add(latestDef);
+                System.out.println("Local defs:");
+                for (String op: latestDefs.keySet()) {
+                    IRInstruction latestDef = latestDefs.get(op);
+                    Debug.printInstruction(latestDef, "\t");
+                    if (!critical.contains(latestDef)) {
+                        critical.add(latestDef);
+                        worklist.add(latestDef);
+                    }
                 }
+
             }
 
             System.out.println();
