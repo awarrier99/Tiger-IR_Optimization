@@ -44,6 +44,7 @@ public class Optimizer {
 
         criticalCodes.add(IRInstruction.OpCode.CALL);
         criticalCodes.add(IRInstruction.OpCode.CALLR);
+        criticalCodes.add(IRInstruction.OpCode.ARRAY_STORE);
         criticalCodes.add(IRInstruction.OpCode.GOTO);
         criticalCodes.addAll(branchCodes);
     }
@@ -75,7 +76,7 @@ public class Optimizer {
         return leaders;
     }
 
-    private ControlFlowGraph buildControlFlowGraph() {
+    private ControlFlowGraph buildControlFlowGraph(Map<IRInstruction, BasicBlock> blockMap) {
         Map<String, IRInstruction> labelMap = new HashMap<>();
         Map<String, BasicBlock> functionBlockMap = new HashMap<>();
         Map<String, BasicBlock> returnBlockMap = new HashMap<>();
@@ -103,6 +104,7 @@ public class Optimizer {
                         block.predecessors.add(curr);
                     }
                     curr = block;
+                    blockMap.put(instruction, curr);
                     if (i == 0) functionBlockMap.put(function.name, curr);
                 }
                 if (instruction.opCode == IRInstruction.OpCode.GOTO) {
@@ -111,6 +113,7 @@ public class Optimizer {
                     BasicBlock block = leaderBlockMap.get(labelMap.get(label));
                     curr.successors.add(block);
                     block.predecessors.add(curr);
+                    blockMap.put(instruction, curr);
                     curr = null;
                 } else if (branchCodes.contains(instruction.opCode)) {
                     if (!isLeader) curr.instructions.add(instruction);
@@ -121,6 +124,7 @@ public class Optimizer {
                     block = leaderBlockMap.get(function.instructions.get(i + 1));
                     curr.successors.add(block);
                     block.predecessors.add(curr);
+                    blockMap.put(instruction, curr);
                     curr = null;
                 } else if (instruction.opCode == IRInstruction.OpCode.CALL || instruction.opCode == IRInstruction.OpCode.CALLR) {
                     if (!isLeader) curr.instructions.add(instruction);
@@ -136,6 +140,7 @@ public class Optimizer {
                             block.predecessors.add(returnBlockMap.get(name));
                         }
                         else returnCache.add(function.instructions.get(i + 1));
+                        blockMap.put(instruction, curr);
                         curr = null;
                     }
                 } else if (instruction.opCode == IRInstruction.OpCode.RETURN) {
@@ -146,8 +151,12 @@ public class Optimizer {
                         curr.successors.add(block);
                         block.predecessors.add(curr);
                     }
+                    blockMap.put(instruction, curr);
                     curr = null;
-                } else if (!isLeader) curr.instructions.add(instruction);
+                } else if (!isLeader) {
+                    curr.instructions.add(instruction);
+                    blockMap.put(instruction, curr);
+                }
             }
         }
 
@@ -237,7 +246,7 @@ public class Optimizer {
 
     private ArrayList<IRInstruction> optimize() {
         Map<IRInstruction, BasicBlock> blockMap = new HashMap<>();
-        ControlFlowGraph graph = this.buildControlFlowGraph();
+        ControlFlowGraph graph = this.buildControlFlowGraph(blockMap);
         this.generateReachDefinitions(graph);
         Debug.printControlFlowGraph(graph);
 
@@ -258,11 +267,18 @@ public class Optimizer {
 
         }
 
-        return null;
+        ArrayList<IRInstruction> instructions = new ArrayList<>();
+        for (IRFunction function: this.program.functions) {
+            for (IRInstruction instruction: function.instructions) {
+                if (critical.contains(instruction)) instructions.add(instruction);
+            }
+        }
+
+        return instructions;
     }
 
     public static void main(String[] args) throws Exception {
         Optimizer optimizer = new Optimizer(args[0]);
-        optimizer.optimize();
+        ArrayList<IRInstruction> optimized = optimizer.optimize();
     }
 }
