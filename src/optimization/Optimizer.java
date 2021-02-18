@@ -194,9 +194,8 @@ public class Optimizer {
     {
         reachedBlocks.add(head.name);
         head.predecessors.forEach((pred) -> head.in.addAll(pred.out));
-        head.out = head.gen;
-        HashSet<Integer> added = new HashSet<>();
-        added = head.in;
+        head.out = new HashSet<>(head.gen);
+        HashSet<Integer> added = new HashSet<>(head.in);
         added.removeAll(head.kill);
         head.out.addAll(added);
         if (outSet.containsKey(head.name)) {
