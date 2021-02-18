@@ -39,6 +39,7 @@ public class Optimizer {
         defCodes.add(IRInstruction.OpCode.DIV);
         defCodes.add(IRInstruction.OpCode.AND);
         defCodes.add(IRInstruction.OpCode.OR);
+        defCodes.add(IRInstruction.OpCode.ARRAY_LOAD);
     }
 
     private Set<IRInstruction> getLeaders(Map<String, IRInstruction> labelMap) {
@@ -147,7 +148,7 @@ public class Optimizer {
         return new ControlFlowGraph(entry);
     }
 
-    private void generateReachDefinitions(ControlFlowGraph cfg)
+    private Map<Integer, IRInstruction> generateReachDefinitions(ControlFlowGraph cfg)
     {
         Map<IROperand, ArrayList<Integer>> definitions = new HashMap<>();
         Set<Integer> reachedBlocks = new HashSet<>();
@@ -163,6 +164,8 @@ public class Optimizer {
             tempOutSet = outSet;
             reachDefinitionsHelper2(head, tempOutSet, reachedBlocks);
         }
+
+        return lineToInst;
 
     }
 
@@ -235,7 +238,8 @@ public class Optimizer {
         Optimizer optimizer = new Optimizer(args[0]);
         ControlFlowGraph graph = optimizer.buildControlFlowGraph();
         Debug.printControlFlowGraph(graph);
-        optimizer.generateReachDefinitions(graph);
+        Map<Integer, IRInstruction> linetoInst = new HashMap<>();
+        linetoInst = optimizer.generateReachDefinitions(graph);
         //System.out.println("This finished.");
     }
 }
