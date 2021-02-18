@@ -46,6 +46,7 @@ public class Optimizer {
         criticalCodes.add(IRInstruction.OpCode.CALL);
         criticalCodes.add(IRInstruction.OpCode.CALLR);
         criticalCodes.add(IRInstruction.OpCode.ARRAY_STORE);
+        criticalCodes.add(IRInstruction.OpCode.RETURN);
         criticalCodes.add(IRInstruction.OpCode.GOTO);
         criticalCodes.addAll(branchCodes);
     }
@@ -263,15 +264,29 @@ public class Optimizer {
                 if (criticalCodes.contains(instruction.opCode)) {
                     critical.add(instruction);
                     worklist.add(instruction);
-                    Debug.printInstruction(instruction, "");
+//                    Debug.printInstruction(instruction, "");
                 }
             }
         }
 
         while (!worklist.isEmpty()) {
             IRInstruction instruction = worklist.remove(0);
-            BasicBlock block = blockMap.get(instruction);
-
+            BasicBlock block = graph.find(graph.entry, instruction);
+            for (int line: block.in) {
+                IRInstruction def = linetoInst.get(line);
+                outer:
+                for (IROperand defOperand: def.operands) {
+                    for (IROperand operand: instruction.operands) {
+                        if (operand.toString().equals(defOperand.toString())) {
+                            if (!critical.contains(def)) {
+                                critical.add(def);
+                                worklist.add(def);
+                                break outer;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         ArrayList<IRInstruction> instructions = new ArrayList<>();
@@ -287,5 +302,6 @@ public class Optimizer {
     public static void main(String[] args) throws Exception {
         Optimizer optimizer = new Optimizer(args[0]);
         ArrayList<IRInstruction> optimized = optimizer.optimize();
+        for (IRInstruction instruction: optimized) Debug.printInstruction(instruction, "");
     }
 }
