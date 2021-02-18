@@ -33,6 +33,25 @@ public class Debug {
             printInstruction(instruction, prefix + "\t");
         }
 
+        System.out.println(prefix + "In:");
+        for (int in: block.in) {
+            System.out.println(prefix + "\t" + in + "\t");
+        }
+
+        System.out.println(prefix + "Out:");
+        for (int out: block.out) {
+            System.out.println(prefix + "\t" + out + "\t");
+        }
+
+        System.out.println(prefix + "Gen:");
+        for (int gen: block.gen) {
+            System.out.println(prefix + "\t" + gen + "\t");
+        }
+
+        System.out.println(prefix + "Kill:");
+        for (int kill: block.kill) {
+            System.out.println(prefix + "\t" + kill + "\t");
+        }
         for (BasicBlock predecessor: block.predecessors) {
             System.out.println(prefix + "Predecessor: " + predecessor.name);
         }

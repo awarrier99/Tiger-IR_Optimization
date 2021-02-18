@@ -167,7 +167,7 @@ public class Optimizer {
 
     private Map<Integer, IRInstruction> generateReachDefinitions(ControlFlowGraph cfg)
     {
-        Map<IROperand, ArrayList<Integer>> definitions = new HashMap<>();
+        Map<String, ArrayList<Integer>> definitions = new HashMap<>();
         Set<Integer> reachedBlocks = new HashSet<>();
         Map<Integer, IRInstruction> lineToInst = new HashMap<>();
         Map<Integer, HashSet<Integer>> outSet = new HashMap<>();
@@ -211,7 +211,7 @@ public class Optimizer {
     private void reachDefinitionsHelper
             (BasicBlock head,
              Set<Integer> reachedBlocks,
-             Map<IROperand, ArrayList<Integer>> definitions,
+             Map<String, ArrayList<Integer>> definitions,
              Map<Integer, HashSet<Integer>> outSet,
              Map<Integer, IRInstruction> lineToInst)
     {
@@ -227,10 +227,10 @@ public class Optimizer {
                 head.out.add(curInst.irLineNumber);
                 head.gen.add(curInst.irLineNumber);
                 operand = curInst.operands[0];
-                if (!definitions.containsKey(operand)) {
-                    definitions.put(operand, new ArrayList<Integer>());
+                if (!definitions.containsKey(operand.toString())) {
+                    definitions.put(operand.toString(), new ArrayList<Integer>());
                 }
-                definitions.get(operand).add(curInst.irLineNumber);
+                definitions.get(operand.toString()).add(curInst.irLineNumber);
             }
         }
         outSet.put(head.name, head.out);
@@ -242,7 +242,7 @@ public class Optimizer {
 
         for (int i = 0; i < head.instructions.size(); i++) {
             if (defCodes.contains(head.instructions.get(i).opCode)) {
-                defs = definitions.get(head.instructions.get(i).operands[0]);
+                defs = definitions.get(head.instructions.get(i).operands[0].toString());
                 head.kill.addAll(defs);
             }
         }
