@@ -151,10 +151,11 @@ public class Optimizer {
     {
         Map<IROperand, ArrayList<Integer>> definitions = new HashMap<>();
         Set<Integer> reachedBlocks = new HashSet<>();
+        Map<Integer, IRInstruction> lineToInst = new HashMap<>();
         Map<Integer, HashSet<Integer>> outSet = new HashMap<>();
         Map<Integer, HashSet<Integer>> tempOutSet = new HashMap<>();
         BasicBlock head = cfg.entry;
-        reachDefinitionsHelper(head, reachedBlocks, definitions, outSet);
+        reachDefinitionsHelper(head, reachedBlocks, definitions, outSet, lineToInst);
         reachedBlocks.clear();
 
         while(!outSet.equals(tempOutSet))
@@ -191,7 +192,8 @@ public class Optimizer {
             (BasicBlock head,
              Set<Integer> reachedBlocks,
              Map<IROperand, ArrayList<Integer>> definitions,
-             Map<Integer, HashSet<Integer>> outSet)
+             Map<Integer, HashSet<Integer>> outSet,
+             Map<Integer, IRInstruction> lineToInst)
     {
         IROperand operand;
         ArrayList<Integer> defs;
@@ -201,6 +203,7 @@ public class Optimizer {
         {
             curInst = head.instructions.get(i);
             if (defCodes.contains(curInst.opCode)) {
+                lineToInst.put(curInst.irLineNumber, curInst);
                 head.out.add(curInst.irLineNumber);
                 head.gen.add(curInst.irLineNumber);
                 operand = curInst.operands[0];
@@ -213,7 +216,7 @@ public class Optimizer {
         outSet.put(head.name, head.out);
         for (int x = 0; x < head.successors.size(); x++) {
             if (!reachedBlocks.contains(head.successors.get(x).name)) {
-                reachDefinitionsHelper(head.successors.get(x), reachedBlocks, definitions, outSet);
+                reachDefinitionsHelper(head.successors.get(x), reachedBlocks, definitions, outSet, lineToInst);
             }
         }
 
