@@ -4,6 +4,8 @@ import ir.*;
 import ir.operand.IRFunctionOperand;
 import ir.operand.IRLabelOperand;
 import ir.operand.IROperand;
+
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.*;
@@ -344,7 +346,9 @@ public class Optimizer {
 //        System.out.println("\nOptimized:");
 //        for (IRInstruction instruction: optimized) Debug.printInstruction(instruction, "");
 
-        IRPrinter printer = new IRPrinter(new PrintStream("optimized/" + filename));
+        new File("optimized").mkdir();
+        int slashPos = filename.lastIndexOf('/');
+        IRPrinter printer = new IRPrinter(new PrintStream("optimized/" + filename.substring(slashPos + 1)));
         printer.printProgram(optimizer.program);
     }
 }
