@@ -260,7 +260,7 @@ public class Optimizer {
         Map<IRInstruction, BasicBlock> blockMap = new HashMap<>();
         ControlFlowGraph graph = this.buildControlFlowGraph(blockMap);
         Map<Integer, IRInstruction> linetoInst = this.generateReachDefinitions(graph);
-        Debug.printControlFlowGraph(graph);
+//        Debug.printControlFlowGraph(graph);
 
         Set<IRInstruction> critical = new HashSet<>();
         ArrayList<IRInstruction> worklist = new ArrayList<>();
@@ -278,7 +278,7 @@ public class Optimizer {
             IRInstruction instruction = worklist.remove(0);
             if (instruction.opCode == IRInstruction.OpCode.LABEL) continue;
             BasicBlock block = graph.find(graph.entry, instruction);
-            Debug.printInstruction(instruction, "");
+//            Debug.printInstruction(instruction, "");
 
             Map<String, IRInstruction> latestDefs = new HashMap<>();
             for (int i = 0; i < block.instructions.size(); i++) {
@@ -297,10 +297,10 @@ public class Optimizer {
             }
 
             if (!latestDefs.isEmpty()) {
-                System.out.println("Local defs:");
+//                System.out.println("Local defs:");
                 for (String op: latestDefs.keySet()) {
                     IRInstruction latestDef = latestDefs.get(op);
-                    Debug.printInstruction(latestDef, "\t");
+//                    Debug.printInstruction(latestDef, "\t");
                     if (!critical.contains(latestDef)) {
                         critical.add(latestDef);
                         worklist.add(latestDef);
@@ -308,11 +308,11 @@ public class Optimizer {
                 }
             }
 
-            System.out.println("Defs:");
+//            System.out.println("Defs:");
             for (int line: block.in) {
                 IRInstruction def = linetoInst.get(line);
                 if (latestDefs.containsKey(def.operands[0].toString())) continue;
-                Debug.printInstruction(def, "\t");
+//                Debug.printInstruction(def, "\t");
                 for (int i = 0; i < instruction.operands.length; i++) {
                     if (i == 0 && instruction.opCode != IRInstruction.OpCode.RETURN) continue;
 
@@ -327,7 +327,7 @@ public class Optimizer {
                 }
             }
 
-            System.out.println();
+//            System.out.println();
         }
 
         for (IRFunction function: this.program.functions) {
@@ -345,10 +345,7 @@ public class Optimizer {
         optimizer.optimize();
 //        System.out.println("\nOptimized:");
 //        for (IRInstruction instruction: optimized) Debug.printInstruction(instruction, "");
-
-        new File("optimized").mkdir();
-        int slashPos = filename.lastIndexOf('/');
-        IRPrinter printer = new IRPrinter(new PrintStream("optimized/" + filename.substring(slashPos + 1)));
+        IRPrinter printer = new IRPrinter(new PrintStream(System.out));
         printer.printProgram(optimizer.program);
     }
 }
